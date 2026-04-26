@@ -170,7 +170,7 @@ def nki_predict(
       
       max_vals = nisa.max8(src=p_tile)
       
-      indices = nisa.nc_find_index8(data=p_tile, vals=max_vals, dtype=np.int32)
+      indices = nisa.nc_find_index8(data=p_tile, vals=max_vals, dtype=np.uint32)
       
       nl.store(predictions[i*pmax:(i+1)*pmax], indices[:, 0])
 
