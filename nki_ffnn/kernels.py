@@ -158,9 +158,6 @@ def nki_predict(
   Returns:
       predictions: a 1D tensor of shape [BATCH_SIZE] with the predicted class for each input
   """
-  probs = # YOUR CODE HERE
-  BATCH_SIZE, OUTPUT_SIZE = probs.shape
-  predictions = nl.ndarray((BATCH_SIZE,), dtype=np.int32, buffer=nl.hbm)
 
   probs = nki_forward(X, W1, b1, W2, b2, matmul_kernel=matmul_kernel)
   BATCH_SIZE, OUTPUT_SIZE = probs.shape
