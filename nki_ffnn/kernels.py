@@ -166,11 +166,11 @@ def nki_predict(
   num_tiles = BATCH_SIZE // pmax
 
   for i in nl.affine_range(num_tiles):
-      p_tile = nl.load(probs[i*pmax:(i+1)*pmax, :])  
+      p_tile = nl.load(probs[i*pmax:(i+1)*pmax, :]) 
       
-      max_vals = nisa.max8(p_tile) 
+      max_vals = nisa.max8(src=p_tile)
       
-      indices = nisa.nc_find_index8(p_tile, max_vals) 
+      indices = nisa.nc_find_index8(data=p_tile, vals=max_vals, dtype=np.int32)
       
       nl.store(predictions[i*pmax:(i+1)*pmax], indices[:, 0])
 
