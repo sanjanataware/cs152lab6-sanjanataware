@@ -115,16 +115,14 @@ def nki_forward(
   INPUT_SIZE_, HIDDEN_SIZE = W1.shape
   HIDDEN_SIZE_, OUTPUT_SIZE = W2.shape
 
-  X_T = nki_transpose(X)  
-  H_raw = nl.ndarray((BATCH_SIZE, HIDDEN_SIZE), dtype=X.dtype, buffer=nl.hbm)
-  nki_matmul(X_T, W1, H_raw)
+  X_T = nki_transpose(X)        
+  H_raw = nki_matmul(X_T, W1)  
 
   b1_2d = b1.reshape((1, HIDDEN_SIZE))
   H = nki_bias_add_act(H_raw, b1_2d, act='relu')
 
-  H_T = nki_transpose(H)  
-  out_raw = nl.ndarray((BATCH_SIZE, OUTPUT_SIZE), dtype=X.dtype, buffer=nl.hbm)
-  nki_matmul(H_T, W2, out_raw)
+  H_T = nki_transpose(H)          
+  out_raw = nki_matmul(H_T, W2)  
 
   b2_2d = b2.reshape((1, OUTPUT_SIZE))
   probs = nki_bias_add_act(out_raw, b2_2d, act='softmax')
