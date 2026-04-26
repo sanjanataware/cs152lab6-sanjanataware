@@ -66,9 +66,10 @@ def nki_bias_add_act(A, b, act='relu'):
         if act == 'relu':
             out = nl.maximum(out, 0)
         elif act == 'softmax':
-            out = nl.subtract(out, max_val)       
+            max_val = nisa.tensor_reduce(np.max, out, axis=(1,), dtype=out.dtype, negate=False)
+            out = nl.subtract(out, max_val)
             out = nl.exp(out)
-            sum_val = nl.sum(out, axis=1)         
+            sum_val = nisa.tensor_reduce(np.add, out, axis=(1,), dtype=out.dtype, negate=False)
             out = nl.divide(out, sum_val)
 
         nl.store(result[i*pmax:(i+1)*pmax, :], out)
