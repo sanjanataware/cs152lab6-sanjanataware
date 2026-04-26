@@ -22,8 +22,17 @@ def nki_transpose(in_tensor):
 
     out_tensor = nl.ndarray((o_rows, o_cols), dtype=in_tensor.dtype, buffer=nl.hbm)
 
-    # YOUR CODE HERE
+    pmax = nl.tile_size.pmax  
 
+    num_row_tiles = i_rows // pmax
+    num_col_tiles = i_cols // pmax
+
+    for i in nl.affine_range(num_row_tiles):
+        for j in nl.affine_range(num_col_tiles):
+            tile = nl.load(in_tensor[i*pmax:(i+1)*pmax, j*pmax:(j+1)*pmax])
+            t_tile = nisa.nc_transpose(tile)
+            nl.store(out_tensor[j*pmax:(j+1)*pmax, i*pmax:(i+1)*pmax], t_tile)
+            
     return out_tensor
 
 @nki.jit
