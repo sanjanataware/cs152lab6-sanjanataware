@@ -92,9 +92,10 @@ def conv2d_nki(X, W, bias):
                 # Load and add the bias to the row_out based on the current output channel tile idx
                 b_tile = nl.load(bias[c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile])
                 row_out_sbuf = nl.copy(row_out, dtype=X.dtype)
-                row_out_sbuf += b_tile[:, None]
+                b_tile_2d = b_tile.reshape((c_out_tile, 1))
+                row_out_sbuf = nl.add(row_out_sbuf, b_tile_2d)
 
                 # Store the output  
-                nl.store(X_out[img,c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile, out_row, :], row_out_sbuf)
+                nl.store(X_out[img, c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile, out_row, :], row_out_sbuf)
 
     return X_out
