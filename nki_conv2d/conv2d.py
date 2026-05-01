@@ -65,7 +65,8 @@ def conv2d_nki(X, W, bias):
                 for j in nl.affine_range(filter_width):
                     # 1. Load the weight tile for the current input and output channel tiles idx and filter position
                     # 2. Store it in the w array at the correct location and orientation
-                    w_tile = nl.load(W[c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile, c_in_tile_idx * c_in_tile:(c_in_tile_idx + 1) * c_in_tile, i, j])
+                    w_tile = nl.ndarray((c_out_tile, c_in_tile), dtype=W.dtype, buffer=nl.sbuf)
+                    nisa.dma_copy(dst=w_tile, src=W[c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile, c_in_tile_idx * c_in_tile:(c_in_tile_idx + 1) * c_in_tile, i, j])
                     w[:, :, c_out_tile_idx, c_in_tile_idx, i, j] = nisa.nc_transpose(w_tile)
 
     # Process the images one-by-one
