@@ -65,9 +65,9 @@ def conv2d_nki(X, W, bias):
                 for j in nl.affine_range(filter_width):
                     # 1. Load the weight tile for the current input and output channel tiles idx and filter position
                     # 2. Store it in the w array at the correct location and orientation
-                    w_tile = nl.ndarray((c_out_tile, c_in_tile), dtype=W.dtype, buffer=nl.sbuf)
-                    nisa.dma_copy(dst=w_tile, src=W[c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile, c_in_tile_idx * c_in_tile:(c_in_tile_idx + 1) * c_in_tile, i, j])
-                    w[:, :, c_out_tile_idx, c_in_tile_idx, i, j] = nisa.nc_transpose(w_tile)
+                    tileW = nl.ndarray((c_out_tile, c_in_tile), dtype=W.dtype, buffer=nl.sbuf)
+                    nisa.dma_copy(dst=tileW, src=W[c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile, c_in_tile_idx * c_in_tile:(c_in_tile_idx + 1) * c_in_tile, i, j])
+                    w[:, :, c_out_tile_idx, c_in_tile_idx, i, j] = nisa.nc_transpose(tileW)
 
     # Process the images one-by-one
     for img in nl.affine_range(batch_size):
@@ -85,17 +85,17 @@ def conv2d_nki(X, W, bias):
                             # 1. Select the weight tile for the current input and output channel tiles idx and filter position
                             # 2. Load the input tile for the current input channel tile idx, output row, filter position
                             # 3. Matmul the weight tile and input tile, and accumulate the result in row_out
-                            w_tile = w[:, :, c_out_tile_idx, c_in_tile_idx, i, j]
-                            x_tile = nl.load(X[img, c_in_tile_idx * c_in_tile:(c_in_tile_idx + 1) * c_in_tile, out_row + i, j:j + out_width])
-                            row_out += nisa.nc_matmul(w_tile, x_tile)
+                            tileW = w[:, :, c_out_tile_idx, c_in_tile_idx, i, j]
+                            tileX = nl.load(X[img, c_in_tile_idx * c_in_tile:(c_in_tile_idx + 1) * c_in_tile, out_row + i, j:j + out_width])
+                            row_out += nisa.nc_matmul(tileW, tileX)
 
                 # Load and add the bias to the row_out based on the current output channel tile idx
-                b_tile = nl.load(bias[c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile])
-                row_out_sbuf = nl.copy(row_out, dtype=X.dtype)
-                b_tile_2d = b_tile.reshape((c_out_tile, 1))
-                row_out_sbuf = nl.add(row_out_sbuf, b_tile_2d)
+                tileB = nl.load(bias[c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile])
+                rowOut_sbuf = nl.copy(row_out, dtype=X.dtype)
+                tileB_2d = tileB.reshape((c_out_tile, 1))
+                rowOut_sbuf = nl.add(rowOut_sbuf, tileB_2d)
 
                 # Store the output  
-                nl.store(X_out[img, c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile, out_row, :], row_out_sbuf)
+                nl.store(X_out[img, c_out_tile_idx * c_out_tile:(c_out_tile_idx + 1) * c_out_tile, out_row, :], rowOut_sbuf)
 
     return X_out
